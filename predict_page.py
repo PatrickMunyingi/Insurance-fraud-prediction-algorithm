@@ -10,7 +10,7 @@ data=load_model()
 st.title("**We will need some infomation**")
 st.sidebar.title("**Fraudulent claim prediction web app**")
 
-regressor=data['model']
+lr=data['model']
 le_policy_state=data['le_policy_state']
 le_policy_csl=data['le_policy_csl']
 le_sex=data['le_sex']
@@ -29,7 +29,7 @@ def show_predict_page():
     st.sidebar.title("Fradulent claims detection web app")
 
 
-    st.write("""### We will need some info:""")
+    st.write("""**### We will need some info:**""")
 policy_state=('Ohio','Illinois','Indiana')
 policy_csl=('250/500', '100/300', '500/1000')
 sex=('MALE', 'FEMALE')
@@ -47,14 +47,10 @@ relationship=('husband', 'other-relative', 'own-child', 'unmarried', 'wife',
        'not-in-family')
 incident_type=('Single Vehicle Collision', 'Vehicle Theft',
        'Multi-vehicle Collision', 'Parked Car')
-collision_type=('craft-repair', 'machine-op-inspct', 'sales', 'armed-forces',
-       'tech-support', 'prof-specialty', 'other-service',
-       'priv-house-serv', 'exec-managerial', 'protective-serv',
-       'transport-moving', 'handlers-cleaners', 'adm-clerical',
-       'farming-fishing')
+collision_type=('Side Collision', '?', 'Rear Collision', 'Front Collision')
 incident_severity=('blank', 'Minor Damage', 'Major Damage', 'Total Loss',
        'Trivial Damage')
-incident_state=('South Carolina', 'None', 'NewYork', 'Ohio', 'West Virginia',
+incident_state=('South Carolina', None, 'NewYork', 'Ohio', 'West Virginia',
        'North Carolina', 'Pennsylvania')
 property_damage=('YES', '?', 'NO')
 auto_make=('Saab', 'Mercedes', 'Dodge', 'Chevrolet', 'Accura', 'Nissan',
@@ -63,7 +59,7 @@ auto_make=('Saab', 'Mercedes', 'Dodge', 'Chevrolet', 'Accura', 'Nissan',
 
 policy_states=st.selectbox('Policy State',policy_state)
 policy_csls=st.selectbox('Policy csl',policy_csl)
-gender=st.selectbox('Gender',sex)
+gender=st.sidebar.selectbox('Gender',sex)
 education_level=st.selectbox('Education Level',education)
 occupation_level=st.selectbox('Occupation',occupation)
 hobby=st.selectbox('Hobby',hobbies)
@@ -77,41 +73,35 @@ auto=st.selectbox('Auto Make',auto_make)
 
 years=st.sidebar.number_input('Years as customers',0,50,0)
 age=st.sidebar.slider('Age',0,100,0)
-policy_deductable=st.number_input('Policy Deductable',0,10000000)
-annual_premium=st.number_input('Annual Premium',0,1000000000)
+policy_deductable=st.sidebar.number_input('Policy Deductable',0,10000000)
+annual_premium=st.sidebar.number_input('Annual Premium',0,1000000000)
 vehicle_number=st.sidebar.number_input('Number of vehicles inolved in accident',0,1000)
 injuries=st.sidebar.slider('Persons injured',0,100)
 injury_claim=st.sidebar.number_input('Injury Claims',0,10000000)
 property_claim=st.sidebar.number_input('Property Claim',0,1000000000000)
-vehicle_claim=st.number_input('Vehicle claim',0,10000000000)
+vehicle_claim=st.sidebar.number_input('Vehicle claim',0,10000000000)
 auto_year=st.slider('Year car was made',1980,2032)
 
 
 ok=st.button('Proceed with classification')
+from sklearn.preprocessing import LabelEncoder
+
+# ...
 
 if ok:
-    x=np.array([policy_states,policy_csls,gender,education,occupation,hobby,relationship,incident_type,collision,
-    severity,incident_state,property,auto,years,age,policy_deductable,annual_premium,vehicle_number,injuries,injury_claim,property_claim,
-    vehicle_claim,auto_year])
-    x[:,2]=le_policy_state.fit_transform(x[:,2])
-    x[:,3]=le_policy_csl.fit_transform(x[:,3])
-    x[:,6]=le_sex.fit_transform(x[:,6])
-    x[:,7]=le_education.fit_transform(x[:,7])
-    x[:,8]=le_occupation.fit_transform(x[:,8])
-    x[:,9]=le_hobbies.fit_transform(x[:,9])
-    x[:,10]=le_relationship.fit_transform(x[:,10])
-    x[:,11]=le_incident_type.fit_transform(x[:,11])
-    x[:,12]=le_collision_type.fit_transform(x[:,12])
-    x[:,13]=le_incident_severity.fit_transform(x[:,13])
-    x[:,14]=le_incident_state.fit_transform(x[:,14])
-    x[:,16]=le_property_damage.fit_transform(x[:,16])
-    x[:,21]=le_auto_make.fit_transform(x[:,21])
-    x=x.astype(float)
-    
-    
+    x = np.array([[policy_states, policy_csls, gender, education_level, occupation_level, hobby, relationship_level, incident_type_, collision,
+                   severity, incident_state_, property, auto, years, age, policy_deductable, annual_premium, vehicle_number, injuries,
+                   injury_claim, property_claim, vehicle_claim, auto_year]])
 
-    prediction=regressor.predict(x)
-    if prediction[0]==0:
+    le = LabelEncoder()
+
+    x = le.fit_transform(x.ravel())
+
+    x = x.astype(float)
+    x = x.reshape(1, -1)
+
+    prediction = lr.predict(x)
+    if prediction[0] == 0:
         st.subheader("The claim might not be fraudulent")
     else:
         st.subheader("The claim might be a result of fraud")
